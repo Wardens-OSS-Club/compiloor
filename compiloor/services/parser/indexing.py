@@ -52,6 +52,7 @@ def create_report_with_page_numbers_and_legend(report_path: str, report_section_
         for index in range(len(report_section_headings)):
             heading = report_section_headings[index]
 
+            # Chopping the heading if it's too long so that we can find a complete fragment in the page:
             if len(heading) > 70:
                 heading = heading[:70]
                 report_section_headings[index] = heading

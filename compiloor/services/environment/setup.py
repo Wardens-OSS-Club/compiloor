@@ -1,6 +1,6 @@
 from json import dumps
 
-from os import mkdir
+from os import listdir, mkdir
 from os.path import abspath, isdir
 
 from shutil import rmtree
@@ -68,3 +68,15 @@ def add_finding_template(severity: Severity) -> None:
     except Exception as err:
         Logger.error(f"An error occured while adding a finding template: {err}")
         exit(1)
+        
+@staticmethod
+def findings_directory_not_empty() -> None:
+    """
+        Raises an exception if the findings directory is empty.
+    """
+    dir: list[str] = listdir(abspath(FINDINGS_DIRECTORY))
+    dir.remove('.DS_Store')
+
+    if dir: return
+    Logger.error("The findings directory is empty!")
+    exit(1)

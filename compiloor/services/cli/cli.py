@@ -9,7 +9,7 @@ from compiloor.services.parser.indexing import create_report_with_page_numbers_a
 from compiloor.services.parser.utils import ReportCustomizer
 from compiloor.services.typings.finding import SeverityAnnotation
 from compiloor.services.environment import (
-    current_directory_initialized, initialize_directory,
+    current_directory_initialized, findings_directory_not_empty, initialize_directory,
     add_finding_template
 )
 from compiloor.constants.environment import INITIALIZED, NOT_INITIALIZED
@@ -30,6 +30,7 @@ def add_finding(severity: Annotated[SeverityAnnotation, "severity"] = SeverityAn
 @cli.command("compile")
 def compile_report():
     current_directory_initialized(INITIALIZED)
+    findings_directory_not_empty()
     ConfigUtils.validate_config_template_urls(FileUtils.read_config(json=True))
     
     # The customizer creates the base report and handles almost all serialization:

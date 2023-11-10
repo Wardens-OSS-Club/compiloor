@@ -23,7 +23,8 @@ class Finding:
     
     def __init__(self, fragment: str) -> None:
         self.fragment = fragment
-        first_row = fragment.split("\n")[0]
+        _fragment: list[str] = fragment.split("\n")
+        first_row = _fragment[0]
         
         if not "[" in first_row or not "]" in first_row:
             Logger.error(f"Invalid finding fragment: {first_row}")
@@ -31,7 +32,13 @@ class Finding:
         
         fragments: list[str] = first_row.split("]")
         
-        if fragments[1] == "": fragments[1] = "-"
+        # Case where a finding does not have a title:
+        if fragments[1] == "": 
+            Logger.warning(f"Finding title is missing: {first_row}")
+            fragments[1] = "-"
+            _fragment[0] = fragments[0] + "] -"
+        
+        self.fragment = "\n".join(_fragment)
         
         self.id = fragments[0].split("[")[1].strip() # The ID without the brackets.
         self.id_num = int(self.id.split("-")[1].strip()) # The ID's number as an integer.

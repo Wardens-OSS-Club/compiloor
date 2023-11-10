@@ -133,7 +133,7 @@ class ReportCustomizer:
     
 def get_finding_fragments(
     config: ProtocolInformationConfigDict, findings_section_index: str, paragraph_subheading_tag: str = "h2"
-) -> Tuple[int, dict[Severity, int], str, list[Finding]]:
+) -> Tuple[int, dict[Severity, int], str, list[Finding], list[str]]:
     """
         Extracts the findings from the ./findings directory and
         serializes them into multiple different formats used arcoss the report generation process.
@@ -173,7 +173,8 @@ def get_finding_fragments(
     for severity in reversed(list(Severity)):
         if not severity in findings: continue # Skip empty severity levels
         
-        full_by_severity[severity] = [Finding(finding).render_fragment for finding in findings[severity]]
+        # Sort findings by severity level
+        full_by_severity[severity] = [finding.render_fragment for finding in serialized if finding.severity == severity]
 
     # Adding the `render_fragment` of each finding to the report:
     for finding in serialized:
@@ -211,7 +212,8 @@ def get_finding_fragments(
 
         # Adding the link to the heading:
         markdowns[-1] = markdowns[-1].replace(f'[[{finding.severity.value}_severity_index]]', str(severity_index))
-
+ 
+    # Currently 1. is hardcoded to be the about auditor section.
     section_headings[0] = section_headings[0] + " " + config["author"] # About AUTHOR(S) | Crafted manually
 
     # Returning the findings in multiple different formats:
