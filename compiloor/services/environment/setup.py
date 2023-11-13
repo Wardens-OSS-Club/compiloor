@@ -75,7 +75,7 @@ def findings_directory_not_empty() -> None:
         Raises an exception if the findings directory is empty.
     """
     dir: list[str] = listdir(abspath(FINDINGS_DIRECTORY))
-    dir.remove('.DS_Store')
+    if '.DS_Store' in dir: dir.remove('.DS_Store')
 
     if dir: return
     Logger.error("The findings directory is empty!")

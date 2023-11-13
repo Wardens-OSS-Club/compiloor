@@ -46,7 +46,7 @@ class Severity(Enum):
 class SeverityAnnotation(Enum):
     """Annotation class for severity levels."""
     GAS = "gas"
-    QA = "QA"
+    QA = "qa"
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"

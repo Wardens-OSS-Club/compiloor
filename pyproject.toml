@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "compiloor"
-version = "0.1.4"
+version = "0.1.5"
 description = ""
 authors = ["Kristian Apostolov <kristianapostolovcontacts@gmail.com>"]
 readme = "README.md"
