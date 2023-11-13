@@ -27,8 +27,8 @@ REPORT_SECTION_HEADINGS: list[str] = [
 
 PROTOCOL_INFORMATION_TABLE_COLUMNS: list[str] = [
     "Protocol Name",
-    "Repository",
-    # "Commit", 
+    # "Repository",
+    "Commit", 
     "Date",
     "Protocol Type", 
     "SLOC"
