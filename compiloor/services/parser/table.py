@@ -8,6 +8,7 @@ from compiloor.constants.report import (
     FINDING_COUNT_TABLE_COLUMNS, INFORMATION_TABLE_VARIABLES,
     SEVERITY_CLASSIFICATION_TABLE_COLUMNS, SEVERITY_CLASSIFICATION_TABLE_ROWS
 )
+from compiloor.services.parser.markdown import create_markdown
 from compiloor.services.typings.config import ProtocolInformationConfigDict
 from compiloor.services.typings.finding import Severity
 from compiloor.services.parser.finding import Finding
@@ -118,20 +119,22 @@ class CustomTables(HTMLTableUtils):
         
         for row in INFORMATION_TABLE_VARIABLES.keys():
             if config[CustomTables.clean_row(row)] == "-": continue
-            rows += [[row, config[CustomTables.clean_row(row)]]]
+            rows += [[row, row + "_VALUE"]]
             
         table: str = HTMLTableUtils.create_html_table(
             rows, 
             [], # PROTOCOL_INFORMATION_TABLE_COLUMNS,
             name
         )
-        
+                
         for _key in INFORMATION_TABLE_VARIABLES.keys():
-            table = table.replace(
+            value = create_markdown(config[CustomTables.clean_row(_key)])
+            if value.startswith("<p>"): value = value.replace("<p>", "").replace("</p>", "")
+            table = table.replace(_key + "_VALUE", value).replace(
                 _key,
                 f'<{information_row_heading_tag}>{INFORMATION_TABLE_VARIABLES[_key]}</{information_row_heading_tag}>'
             )
-            
+                    
         return table
     
     @staticmethod
