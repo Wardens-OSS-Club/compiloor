@@ -29,7 +29,7 @@ def create_chromium_document(fragment: str, dir: str = abspath(REPORTS_DIRECTORY
         
         dir = f'{dir}/report-{FileUtils.get_fs_sig_index(report_index)}{REPORT_EXTENSION}'
         
-        document.pdf(path=dir, print_background=True)
+        document.pdf(path=dir, print_background=True, height="297mm", width="210mm")
         
         # Keeping the html digest for debugging purposes:
         # open("report.html", "w").write(document.content())
