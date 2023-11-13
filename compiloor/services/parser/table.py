@@ -113,12 +113,15 @@ class CustomTables(HTMLTableUtils):
             | -------------- | ----------------------- |\n
 
         """
+        
+        rows: list[list[str]] = []
+        
+        for row in INFORMATION_TABLE_VARIABLES.keys():
+            if config[CustomTables.clean_row(row)] == "-": continue
+            rows += [[row, config[CustomTables.clean_row(row)]]]
+            
         table: str = HTMLTableUtils.create_html_table(
-            [
-                [
-                    row, config[CustomTables.clean_row(row)]
-                ] for row in INFORMATION_TABLE_VARIABLES.keys()
-            ], 
+            rows, 
             [], # PROTOCOL_INFORMATION_TABLE_COLUMNS,
             name
         )

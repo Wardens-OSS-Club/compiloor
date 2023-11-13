@@ -20,14 +20,14 @@ FINDING_LIST_TABLE_COLUMNS = ["ID", "Title", "Severity", "Status"]
 
 BASE_CONFIG_SCHEMA: dict[str, str] = {
     "title": "SECURITY RESEARCHER NAME",
-    "author": "SECURITY RESEARCER",
-    "date": "DATE",
+    "author": "-",
+    "date": "-",
     "company_name": "COMPANY NAME",
     "protocol_name": "PROTOCOL NAME",
-    "repository": "GITHUB/GITLAB REPOSITORY",
-    "type": "SOME PROTOCOL TYPE",
-    "commit": "COMMIT HASH",
-    "sloc": "SLOC",
+    "repository": "-",
+    "type": "-",
+    "commit": "-",
+    "sloc": "-",
     # Sections of the report. They go trough an md renderer.
     "about_author_content": "ABOUT SECTION",
     "disclaimer_content": "DISCLAIMER CONTENT",
