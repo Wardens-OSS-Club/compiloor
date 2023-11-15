@@ -166,3 +166,4 @@ templates
 templates/*
 .DS_Store
 poetry.lock
+test

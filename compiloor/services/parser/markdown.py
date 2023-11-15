@@ -30,10 +30,26 @@ class HighlightRenderer(HTMLRenderer):
         
         if not info:
             # Wrapping it in a code block:
-            return '<pre><code>' + escape(code) + '</code></pre>'
+            # return '<pre><code>' + escape(code) + '</code></pre>'
+            info = "solidity"
         
         lexer = get_lexer_by_name(info, stripall=True)
         formatter = HtmlFormatter(style=DefaultStyleExtended, full=True)
+        
+        code = code.split("\n")
+        for index in range(len(code)):
+            if len(code[index]) <= 80: continue 
+            # find the first space before the 80th character and replace it with a newline:
+            
+            whitespaces_before_line: str = " " * (len(code[index]) - len(code[index].lstrip()) + 4)
+            
+            for _index in range(80, 0, -1):
+                if code[index][_index] != " ": continue
+                
+                code[index] = code[index][:_index] + "\n" + whitespaces_before_line + code[index][_index:]
+                break
+        
+        code = "\n".join(code)
         
         highlighted_code: str = highlight(code, lexer, formatter)
         
@@ -44,7 +60,7 @@ def create_markdown(fragment: str, remove_newlines: bool = False) -> str:
     """
         Creates a Markdown parser with syntax highlighting.
     """
-    
+
     markdown: str = mistune_create_markdown(renderer=HighlightRenderer())(fragment)
     
     return markdown.replace("\n", "") if remove_newlines else markdown

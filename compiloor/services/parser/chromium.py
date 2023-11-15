@@ -1,7 +1,5 @@
 from bs4 import BeautifulSoup
 
-from typing import Tuple
-
 from os.path import abspath
 
 from playwright.sync_api import sync_playwright
@@ -18,7 +16,7 @@ def create_chromium_document(fragment: str, dir: str = abspath(REPORTS_DIRECTORY
     
     # This cleans empty tags added by the parser:
     for tag in ["h1", "h2", "h3", "h4", "h5", "h6", "p", "ul"]: fragment = fragment.replace(f"<{tag}></{tag}>", "")
-    fragment = BeautifulSoup(fragment, "html.parser")
+    fragment = BeautifulSoup(fragment, "html.parser").prettify()
 
     # Using a context manager just because the documentation says so:
     with sync_playwright() as playwright:
@@ -28,11 +26,10 @@ def create_chromium_document(fragment: str, dir: str = abspath(REPORTS_DIRECTORY
         report_index = ReportUtils.get_current_report_count() + 1 # Adding 1 for the new index
         
         dir = f'{dir}/report-{FileUtils.get_fs_sig_index(report_index)}{REPORT_EXTENSION}'
-        
-        document.pdf(path=dir, print_background=True, height="297mm", width="210mm")
-        
+        document.emulate_media(media="screen")
+        document.pdf(path=dir, print_background=True, prefer_css_page_size=True, format="A4")
         # Keeping the html digest for debugging purposes:
-        # open("report.html", "w").write(document.content())
+        open("report.html", "w").write(document.content())
         
         browser.close()
     return dir
