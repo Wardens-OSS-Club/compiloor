@@ -165,24 +165,33 @@ class CustomTables(HTMLTableUtils):
             | -------------- | ----------------------- |\n
         """
         
-        finding_counts = [
-            [severity.cast_to_display_case(), finding_amounts_by_severity[severity]]
-            for severity in finding_amounts_by_severity
-        ]
+        finding_counts = []
         
-        # Doesn't allow me to do a one-liner because reverse doesn't return the mutated array, but rather mutates the pointer of the array.
+        for severity in finding_amounts_by_severity:
+            _amount = finding_amounts_by_severity[severity]
+            if _amount == 0: continue
+            finding_counts.append([severity.cast_to_display_case(), _amount])
+        
+        # Doesn't allow me to do a one-liner because reverse doesn't return the mutated array,
+        # but rather mutates the pointer of the array.
         finding_counts.reverse()
 
-        finding_counts += [["Total Findings", total_findings_amount]]     
+        finding_counts += [["{{total_findings}}", "{{total_findings_amount}}"]]     
             
-        return TableUtils.create_html_table(
+        table = TableUtils.create_html_table(
             finding_counts,
             FINDING_COUNT_TABLE_COLUMNS,
             name,
             True
         )
+        
+        return (
+            (
+                table.replace("{{total_findings}}", f'<b>Total Findings</b>')
+            ).replace("{{total_findings_amount}}", f'<b>{total_findings_amount}</b>')
+        )    
     
-    def create_findings_summary_table(findings: list[Finding], name: str = "Summary of Findings") -> str:
+    def create_findings_summary_table(findings: list[Finding], severity_to_index: dict[Severity, int], name: str = "Summary of Findings") -> str:
         """
             Creates a summary of findings table from the given findings.
         
@@ -203,11 +212,20 @@ class CustomTables(HTMLTableUtils):
             | -------------- | ----------------------- | ----------------------- | ------------ |\n
         """
         
-        return TableUtils.create_html_table(
+        table = TableUtils.create_html_table(
             [TableUtils.finding_to_table_row(finding) for finding in findings],
             FINDING_LIST_TABLE_COLUMNS,
             name
         )
+            
+        for finding in findings:
+            _severity_index: int = severity_to_index[finding.severity]
+            table = table.replace(
+                f'[{finding.id}]',
+                f'<a href="#section-8-{_severity_index}-{finding.id_num}">[{finding.id}]</a>'
+            )
+            
+        return table            
     
 class TableUtils(CustomTables):
     """

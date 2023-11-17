@@ -1,7 +1,8 @@
 from compiloor.services.parser.finding import Finding
+from compiloor.services.typings.finding import Severity
 
 
-def create_finding_severities_legend_html(findings_section_index: str, findings: list[Finding]) -> str:
+def create_finding_severities_legend_html(findings_section_index: str, findings: list[Finding]) -> tuple[str, dict[Severity, int]]:
     """
         Creates an HTML fragment with the findings severities legend. \n
         :note: The page numbers of the seperate findings get added in a later stage of the report generation process.
@@ -17,9 +18,10 @@ def create_finding_severities_legend_html(findings_section_index: str, findings:
     
     current_severity, current_severity_index, current_severity_finding_index = None, 0, 0
 
+    severity_to_index: dict[Severity, int] = {}
+
     for finding in findings:
         if finding.severity != current_severity:
-            
             # Tracking the current severity in order to know when to add another subsection:
             current_severity = finding.severity
             
@@ -28,6 +30,8 @@ def create_finding_severities_legend_html(findings_section_index: str, findings:
             
             # The severities are indexed with sub-section indexes (i.e. 8.1) and the findings are indexed with their own identifiers: i.e. [H-01], etc.:
             section_index = f'[{findings_section_index}.{current_severity_index}]_page'
+
+            severity_to_index[finding.severity] = current_severity_index
 
             if current_severity_index != 1: fragments.append("<div>")
 
@@ -68,4 +72,4 @@ def create_finding_severities_legend_html(findings_section_index: str, findings:
             '''
         )
 
-    return "".join(fragments)
+    return ("".join(fragments), severity_to_index)

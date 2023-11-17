@@ -16,7 +16,7 @@ def create_chromium_document(fragment: str, dir: str = abspath(REPORTS_DIRECTORY
     
     # This cleans empty tags added by the parser:
     for tag in ["h1", "h2", "h3", "h4", "h5", "h6", "p", "ul"]: fragment = fragment.replace(f"<{tag}></{tag}>", "")
-    fragment = BeautifulSoup(fragment, "html.parser").prettify()
+    fragment = BeautifulSoup(fragment, "html.parser")
 
     # Using a context manager just because the documentation says so:
     with sync_playwright() as playwright:

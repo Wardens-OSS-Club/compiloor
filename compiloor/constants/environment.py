@@ -20,6 +20,7 @@ FINDING_LIST_TABLE_COLUMNS = ["ID", "Title", "Severity", "Status"]
 
 BASE_CONFIG_SCHEMA: dict[str, str] = {
     "title": "SECURITY RESEARCHER NAME",
+    "sub_title": "SECURITY RESEARCHER SUB TITLE",
     "author": "-",
     "date": "-",
     "company_name": "COMPANY NAME",

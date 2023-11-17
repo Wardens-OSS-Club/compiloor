@@ -31,6 +31,7 @@ class ReportCustomizer:
     findings: str # The finding fragments in HTML format.
     serialized_findings: list[Finding] # The serialized findings in Finding object format.
     report_section_headings: list[str] # The report section headings.
+    severity_to_index: dict[Severity, int] # The severity to index mapping.
     
     def __init__(self) -> str:
         # Gets the report configuration:
@@ -80,7 +81,7 @@ class ReportCustomizer:
             "severity_classification_table": [],
             "information_table": [self.config],
             "findings_count_table": [self.finding_amounts_by_severity, self.total_findings_amount],
-            "findings_summary_table": [self.serialized_findings],
+            "findings_summary_table": [self.serialized_findings, self.severity_to_index],
         }
         
         # Maps the table type -> table creation callable:
@@ -98,10 +99,11 @@ class ReportCustomizer:
     def add_findings_legend(self) -> None:
         # Adding the legend manually:
         # TODO: Change with a modular system trough the config.
+        (findings, self.severity_to_index) = create_finding_severities_legend_html(8, self.serialized_findings)
         self.report = self.report.replace(
             '{{findings_legend}}',
             # 8 is the hardcoded index of the findings section. TODO: Change to a modular section system
-            create_finding_severities_legend_html(8, self.serialized_findings)
+            findings
         )
         
     def assemble_report(self) -> str:
@@ -123,13 +125,15 @@ class ReportCustomizer:
 
             # the "add_" is a prefix for all methods in the class
             # that add something in place of a placeholder in the report:
-            if not method[0].startswith("add_"): continue
+            if not method[0].startswith("add_") or method[0] == "add_dynamic_tables_to_report": continue
             # Calling the method:
             method[1]()
         
         # Even though this is an add method it needs to be called last because 
         # it needs the other report placeholders to already be populated:
         self.add_findings_legend()
+        # Calling it here because it needs the severity_to_index mapping:
+        self.add_dynamic_tables_to_report()
     
 def get_finding_fragments(
     config: ProtocolInformationConfigDict, findings_section_index: str, paragraph_subheading_tag: str = "h2"
