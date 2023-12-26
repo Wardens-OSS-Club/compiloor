@@ -42,3 +42,37 @@ SEVERITY_CLASSIFICATION_TABLE_ROWS: list[list[str]] = [
 SEVERITY_CLASSIFICATION_TABLE_COLUMNS: list[str] = ["Severity", "Impact: High", "Impact: Medium", "Impact: Low"]
 
 FINDING_COUNT_TABLE_COLUMNS: list[str] = ["Severity", "Amount"]
+
+RISK_CLASSIFICATION_MAIN_CONTENT_MD: str = """
+| Severity               | Impact: High | Impact: Medium | Impact: Low |
+| ---------------------- | ------------ | -------------- | ----------- |
+| **Likelihood: High**   | Critical     | High           | Medium      |
+| **Likelihood: Medium** | High         | Medium         | Low         |
+| **Likelihood: Low**    | Medium       | Low            | Low         |
+"""
+
+RISK_CLASSIFICATION_IMPACT_CONTENT_MD: str = """
+- High - leads to a significant material loss of assets in the protocol or significantly harms a group of users.
+
+- Medium - leads to a moderate material loss of assets in the protocol or moderately harms a group of users.
+
+- Low - leads to a minor material loss of assets in the protocol or harms a small group of users.
+"""
+
+RISK_CLASSIFICATION_LIKELIHOOD_CONTENT_MD: str = """
+- High - attack path is possible with reasonable assumptions that mimic on-chain conditions, and the cost of the attack is relatively low compared to the amount of funds that can be stolen or lost.
+
+- Medium - only a conditionally incentivized attack vector, but still relatively likely.
+
+- Low - has too many or too unlikely assumptions or requires a significant stake by the attacker with little or no incentive.
+"""
+
+RISK_CLASSIFICATION_ACTION_REQUIRED_CONTENT_MD: str = """
+- Critical - Must fix as soon as possible (if already deployed)
+
+- High - Must fix (before deployment if not already deployed)
+
+- Medium - Should fix
+
+- Low - Could fix
+"""

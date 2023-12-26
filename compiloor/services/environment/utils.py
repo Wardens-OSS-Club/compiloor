@@ -1,4 +1,6 @@
-from json import loads
+from datetime import datetime
+
+from json import dumps, loads
 
 from os import listdir
 from os.path import abspath
@@ -9,7 +11,7 @@ from requests import get
 
 from compiloor.constants.utils import REPORT_EXTENSION
 from compiloor.constants.environment import (
-    CONFIG_DIRECTORY, FINDINGS_DIRECTORY, REPORTS_DIRECTORY
+    CONFIG_DIRECTORY, FINDINGS_DIRECTORY, REPORTS_DIRECTORY, MAIN_DIRECTORY
 )
 from compiloor.services.typings.config import ProtocolInformationConfigDict
 from compiloor.services.typings.finding import Severity
@@ -27,7 +29,17 @@ class FileUtils:
         """
         
         _config = open(abspath(CONFIG_DIRECTORY), "r").read()
-        return loads(_config) if json else _config
+        
+        _config = loads(_config) 
+        
+        for file in listdir(abspath(MAIN_DIRECTORY+ "/sections")):
+            if not file.endswith(".md"): continue
+            
+            _config[file.replace(".md", "")] = open(abspath(MAIN_DIRECTORY + f"/sections/{file}"), "r").read()
+        
+        if not json and isinstance(_config, dict): _config = dumps(_config, indent=4)
+        
+        return _config
     
     @staticmethod
     def read_finding(severity: Severity, index: int) -> str:
@@ -56,7 +68,24 @@ class FileUtils:
         """
         
         return "0" + str(index) if index < 10 else str(index)
+
+    @staticmethod
+    def get_current_timestamp() -> str:
+        """
+            Returns the current timestamp in the proper signature format.
+        """
+        
+        return datetime.now().strftime("%d-%m-%Y-%H-%M-%S")
     
+    @staticmethod
+    def get_timestamp_fs_sig_index() -> int:
+        """
+            Returns the current timestamp in the proper signature format.
+        """
+        _timestamp = FileUtils.get_current_timestamp()
+        return FileUtils.get_fs_sig_index(
+            len([occurence for occurence in listdir() if _timestamp in occurence])
+        )
 
 class FindingUtils:
     """

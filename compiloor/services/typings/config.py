@@ -11,10 +11,14 @@ class ProtocolInformationConfigDict(TypedDict):
     commit: str
     sloc: str
     about_author_content: str
-    disclaimer_content: str
     about_protocol_content: str
+    disclaimer_content: str
+    introduction_content: str
     security_assessment_summary_content: str
     template_url: str
     stylesheet_url: str
     cover_img_url: str
+    findings: str
+    render_markdown: bool
+    markdown_report: str
     

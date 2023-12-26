@@ -1,4 +1,4 @@
-from compiloor.services.parser.markdown import create_markdown
+from compiloor.services.parser.markdown import create_html_from_markdown
 from compiloor.constants.environment import FINDING_RESOLUTION_STATUS_HEADING
 from compiloor.services.logger import Logger
 from compiloor.services.typings.finding import Severity, SeverityFolderIndex, FindingStatusAnnotation
@@ -59,13 +59,13 @@ class Finding:
 
             self.fragment = self.fragment.replace(FINDING_RESOLUTION_STATUS_HEADING + self.status.value, "")
 
-        if not self.status: self.status = FindingStatusAnnotation.RESOLVED # Resolved is the default status. TODO: Make this configurable.
+        if not self.status: self.status = FindingStatusAnnotation.UNRESOLVED # Resolved is the default status. TODO: Make this configurable.
 
         # TODO: Abstract away the CSS classes into a modular system.
         # The fragment used for adding to the report:
         # Contains the rendered markdown and code blocks rendered with pygments for syntax-highlighting:
         self.render_fragment = f'''
             <div id="section-8-[[{self.severity.value}_severity_index]]-{self.id_num}" class="finding">
-                {create_markdown(self.fragment)}
+                {create_html_from_markdown(self.fragment)}
             </div>
         '''

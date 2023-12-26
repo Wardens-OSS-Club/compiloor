@@ -3,12 +3,11 @@ from typing import Callable
 from tabulate import tabulate
 
 from compiloor.constants.environment import FINDING_LIST_TABLE_COLUMNS
-from compiloor.constants.utils import TABLE_HTML_OUTPUT_FORMAT_SETTING
 from compiloor.constants.report import (
     FINDING_COUNT_TABLE_COLUMNS, INFORMATION_TABLE_VARIABLES,
     SEVERITY_CLASSIFICATION_TABLE_COLUMNS, SEVERITY_CLASSIFICATION_TABLE_ROWS
 )
-from compiloor.services.parser.markdown import create_markdown
+from compiloor.services.parser.markdown import create_html_from_markdown
 from compiloor.services.typings.config import ProtocolInformationConfigDict
 from compiloor.services.typings.finding import Severity
 from compiloor.services.parser.finding import Finding
@@ -28,7 +27,7 @@ class HTMLTableUtils:
         title: str = "",
         highlight_last_row: bool = False, tag: str = "h3",
         remove_underline_from_title: bool = True
-    ) -> str:
+    ) -> tuple[str, str]:
         """
         Creates a table from the given rows and columns.
         """
@@ -39,9 +38,11 @@ class HTMLTableUtils:
         table: str = f'''
         <div class="table-wrapper">
             [[title]]
-            {tabulate(rows, headers=columns, tablefmt=TABLE_HTML_OUTPUT_FORMAT_SETTING)}
+            {tabulate(rows, headers=columns, tablefmt="html")}
         </div>
         '''
+        
+        table_in_md: str = tabulate(rows, headers=columns, tablefmt="github")
         
         no_underline_heading_class = " " + 'class="no-underline-heading"' if remove_underline_from_title else ''
         
@@ -128,7 +129,7 @@ class CustomTables(HTMLTableUtils):
         )
                 
         for _key in INFORMATION_TABLE_VARIABLES.keys():
-            value = create_markdown(config[CustomTables.clean_row(_key)])
+            value = create_html_from_markdown(config[CustomTables.clean_row(_key)])
             if value.startswith("<p>"): value = value.replace("<p>", "").replace("</p>", "")
             table = table.replace(_key + "_VALUE", value).replace(
                 _key,

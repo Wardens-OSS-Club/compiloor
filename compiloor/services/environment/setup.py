@@ -1,18 +1,19 @@
 from json import dumps
 
 from os import listdir, mkdir
-from os.path import abspath, isdir
+from os.path import abspath, isdir, isfile, join
 
 from shutil import rmtree
 
 from compiloor.constants.environment import (
-    BASE_CONFIG_SCHEMA, BASE_FINDING_MD_TEMPLATE,
+    BASE_CONFIG_SCHEMA, BASE_FINDING_MD_TEMPLATE, CONFIG_NAME,
     FINDINGS_DIRECTORY, MAIN_DIRECTORY, REPORTS_DIRECTORY
 )
 from compiloor.constants.logger import ALREADY_INITIALIZED_MSG, NOT_INITIALIZED_MSG
 from compiloor.services.environment.utils import FileUtils, FindingUtils
 from compiloor.services.typings.finding import Severity
 from compiloor.services.logger import Logger
+from compiloor.services.utils.config import ConfigUtils
 
 
 # TODO: Rewrite the following functions into a utility class:
@@ -37,8 +38,20 @@ def initialize_directory(force: bool = False) -> None:
 
         mkdir(_abs_main_dir)
         mkdir(abspath(REPORTS_DIRECTORY))
-        
-        open(f"{_abs_main_dir}/config.json", "w").write(dumps(BASE_CONFIG_SCHEMA, indent=4))
+        mkdir(join(_abs_main_dir, "sections"))
+
+        config: str
+
+        if not isfile(ConfigUtils.get_base_config_location()):
+            config = dumps(BASE_CONFIG_SCHEMA, indent=4)
+            ConfigUtils.mutate_base_config(config, False)
+        else:
+            config = open(ConfigUtils.get_base_config_location()).read()
+            
+        open(join(_abs_main_dir, CONFIG_NAME), "w").write(config)
+
+        for key in ["about_author_content", "disclaimer_content", "introduction_content", "about_protocol_content", "security_assessment_summary_content"]:
+            open(join(_abs_main_dir, "sections", f"{key}.md"), "w").write("write markdown here")
 
         Logger.success("Successfully initialized the directory!")
         
@@ -62,7 +75,7 @@ def add_finding_template(severity: Severity) -> None:
         finding_template = finding_template.replace("{{finding_severity}}", folder_sig)
         finding_template = finding_template.replace("{{finding_index}}", index)    
         
-        open(f"{abspath(FINDINGS_DIRECTORY)}/[{folder_sig}-{index}].md", "w").write(finding_template)
+        open(join(abspath(FINDINGS_DIRECTORY), f"[{folder_sig}-{index}].md"), "w").write(finding_template)
         
         Logger.success(f'Successfully added a finding template for severity "{severity.name}"!')
     except Exception as err:

@@ -1,14 +1,18 @@
-
-from typing import Tuple
-
 from inspect import getmembers, ismethod
 
-from compiloor.constants.report import INFORMATION_TABLE_VARIABLES, REPORT_SECTION_HEADINGS
+from compiloor.constants.report import (
+    INFORMATION_TABLE_VARIABLES,
+    REPORT_SECTION_HEADINGS,
+    RISK_CLASSIFICATION_MAIN_CONTENT_MD,
+    RISK_CLASSIFICATION_IMPACT_CONTENT_MD,
+    RISK_CLASSIFICATION_LIKELIHOOD_CONTENT_MD,
+    RISK_CLASSIFICATION_ACTION_REQUIRED_CONTENT_MD
+)
 from compiloor.constants.utils import MAIN_REPORT_SECTIONS
 from compiloor.services.environment.utils import FileUtils, FindingUtils
 from compiloor.services.parser.finding import Finding
 from compiloor.services.parser.legend import create_finding_severities_legend_html
-from compiloor.services.parser.markdown import create_markdown
+from compiloor.services.parser.markdown import create_html_from_markdown
 from compiloor.services.parser.table import TableUtils
 from compiloor.services.typings.config import ProtocolInformationConfigDict
 from compiloor.services.typings.finding import Severity
@@ -33,24 +37,19 @@ class ReportCustomizer:
     report_section_headings: list[str] # The report section headings.
     severity_to_index: dict[Severity, int] # The severity to index mapping.
     
-    def __init__(self) -> str:
+    def __init__(self, markdown: bool) -> str:
         # Gets the report configuration:
         self.config = FileUtils.read_config(json=True)
+        self.config["render_markdown"] = markdown
 
         # Gets the stylesheet and report template fragment:         
         self.report = FileUtils.read_file(self.config["template_url"], is_url=True)
         self.stylesheet = FileUtils.read_file(self.config["stylesheet_url"], is_url=True, html_tag="style")
         
         # Gets the finding fragments:
-        (
-            self.total_findings_amount,
-            self.finding_amounts_by_severity,
-            self.findings,
-            self.serialized_findings,
-            self.report_section_headings
-        ) = get_finding_fragments(self.config, 8) # 8 is the hardcoded index of the findings section: Will be changed in a future update.
+        self.fetch_finding_fragments(self.config, 8) # 8 is the hardcoded index of the findings section: Will be changed in a future update.
         
-        return self.assemble_report() # Assembles the report.
+        self.assemble_report() # Assembles the report.
     
     def add_report_config_variables(self) -> None:
         for key in self.config.keys():
@@ -58,7 +57,7 @@ class ReportCustomizer:
             
             # Signifies that the value is a markdown fragment:
             # Parsing such content variables so that they can use markdown syntax:
-            if "_content" in key: _value = create_markdown(_value)
+            if "_content" in key: _value = create_html_from_markdown(_value)
             
             # '{{config.<key>}}' syntax is very confusing when:
             self.report = self.report.replace(f"{{{{config.{key}}}}}", _value)
@@ -106,7 +105,7 @@ class ReportCustomizer:
             findings
         )
         
-    def assemble_report(self) -> str:
+    def assemble_report(self) -> None:
         # Adds the main parts of the report to the fragment:
         # i.e. The stylesheet, the findings, the total findings amount.
                 
@@ -134,91 +133,133 @@ class ReportCustomizer:
         self.add_findings_legend()
         # Calling it here because it needs the severity_to_index mapping:
         self.add_dynamic_tables_to_report()
-    
-def get_finding_fragments(
-    config: ProtocolInformationConfigDict, findings_section_index: str, paragraph_subheading_tag: str = "h2"
-) -> Tuple[int, dict[Severity, int], str, list[Finding], list[str]]:
-    """
-        Extracts the findings from the ./findings directory and
-        serializes them into multiple different formats used arcoss the report generation process.
-    """
-    
-    # Getting multiple different formats of the findings:
-    total_amount, amounts_by_severity, findings = FindingUtils.get_finding_fragments()
-
-    # Using this as a copy array with removed empty severity levels:
-    # Remove empty severity levels
-    _findings = {}
-
-    for severity, fragments in findings.items():
-        # Not adding the severity to the report level if it's empty:
-        if not fragments: continue
         
-        _findings[severity] = fragments
+        if self.config["render_markdown"]:
+            md_report: str = ""
+            
+            heading_to_content: dict[str, str] = {
+                "Introduction": self.config["introduction_content"],
+                "Disclaimer": self.config["disclaimer_content"],
+                "About": self.config["about_author_content"],
+                f"About {self.config['protocol_name']}" : self.config["about_protocol_content"],
+                "Risk Classification": RISK_CLASSIFICATION_MAIN_CONTENT_MD,
+                "Impact": RISK_CLASSIFICATION_IMPACT_CONTENT_MD,
+                "Likelihood": RISK_CLASSIFICATION_LIKELIHOOD_CONTENT_MD,
+                "Action required for severity levels": RISK_CLASSIFICATION_ACTION_REQUIRED_CONTENT_MD,
+                "Security Assessment Summary": self.config["security_assessment_summary_content"],
+                "Findings": "\n".join([finding.fragment for finding in self.serialized_findings])
+            }
+                        
+            for heading in self.report_section_headings:                
+                # Removing double spaces:
+                heading = heading.strip().replace(" " * 2, " ")
+                
+                # Getting the heading's index | Supposed to be in the following format: X.Y.Z.
+                md_heading: str = (heading.split(" ")[0].count(".")) * "#"
+                
+                if self.report_section_headings.index(heading) != 0: md_heading = "\n" + md_heading
 
-    # Copy the non-empty severity levels
-    findings = _findings
+                # Removing the heading index from the heading and crafting it back:
+                heading = " ".join(heading.split(" ")[1:]).split("</h2>")[0]
+                
+                if heading == "Executive Summary": continue
+                md_report += f"{md_heading} {heading}\n {heading_to_content[heading]}"
+                if heading == "Findings": break
 
-    markdowns, _finding_fragments = [], []
-
-    # Copying the static headings present in the report template:
-    section_headings = REPORT_SECTION_HEADINGS.copy()
-
-    # Sort severity levels from high to low
-    for severity in reversed(list(findings.keys())):
-        _finding_fragments.extend(findings[severity])
-
-    serialized = [Finding(finding) for finding in _finding_fragments] # Serializing the findings into the Finding format.
-
-    full_by_severity = {}
-    current_severity, severity_index = None, 0
-
-    # Iterate through severity levels from high to low
-    for severity in reversed(list(Severity)):
-        if not severity in findings: continue # Skip empty severity levels
+                
+            self.config["markdown_report"] = md_report
+            
+            
+    def fetch_finding_fragments(
+        self,
+        config: ProtocolInformationConfigDict,
+        findings_section_index: str,
+        paragraph_subheading_tag: str = "h2"
+    ) -> None:
+        """
+            Extracts the findings from the ./findings directory and
+            serializes them into multiple different formats used arcoss the report generation process.
+        """
         
-        # Sort findings by severity level
-        full_by_severity[severity] = [finding.render_fragment for finding in serialized if finding.severity == severity]
+        # Getting multiple different formats of the findings:
+        total_amount, amounts_by_severity, findings = FindingUtils.get_finding_fragments()
 
-    # Adding the `render_fragment` of each finding to the report:
-    for finding in serialized:
-        severity_display = finding.severity.cast_to_display_case()
-        # Adding the finding's title to the section headings for the sake of indexing it later:
-        # example: "[H-01] Finding title"
-        # TODO: Can this be done in a more elegant way?
-        section_headings.append(f"[{finding.id}] {finding.title}")
+        # Using this as a copy array with removed empty severity levels:
+        # Remove empty severity levels
+        _findings = {}
 
-        # Skip if the severity level is the same as the previous one
-        if finding.severity == current_severity: continue 
+        for severity, fragments in findings.items():
+            # Not adding the severity to the report level if it's empty:
+            if not fragments: continue
+            
+            _findings[severity] = fragments
 
-        severity_index += 1
-        current_severity = finding.severity
+        # Copy the non-empty severity levels
+        findings = _findings
 
-        # Adding the severity level heading to the section headings:
-        section_headings.append(f"{findings_section_index}.{severity_index}. {severity_display} Findings")
+        markdowns, _finding_fragments = [], []
 
-        # Get the HTML fragments in the correct order for the current severity:
-        html_fragments = "\n".join(full_by_severity[finding.severity])
+        # Copying the static headings present in the report template:
+        section_headings = REPORT_SECTION_HEADINGS.copy()
 
-        # TODO: Can this be done in a more elegant way?
-        markdowns.append(
-            f'''
-                <div id="section-{findings_section_index}-{severity_index}" class="page-break-after">
-                    <{paragraph_subheading_tag} class="paragraph-subheading">
-                        {findings_section_index}.{severity_index}. {severity_display} Findings
-                    </{paragraph_subheading_tag}>
-                    <div>
-                        {html_fragments}
+        # Sort severity levels from high to low
+        for severity in reversed(list(findings.keys())):
+            _finding_fragments.extend(findings[severity])
+
+        serialized = [Finding(finding) for finding in _finding_fragments] # Serializing the findings into the Finding format.
+
+        full_by_severity = {}
+        current_severity, severity_index = None, 0
+
+        # Iterate through severity levels from high to low
+        for severity in reversed(list(Severity)):
+            if not severity in findings: continue # Skip empty severity levels
+            
+            # Sort findings by severity level
+            full_by_severity[severity] = [finding.render_fragment for finding in serialized if finding.severity == severity]
+
+        # Adding the `render_fragment` of each finding to the report:
+        for finding in serialized:
+            severity_display = finding.severity.cast_to_display_case()
+            # Adding the finding's title to the section headings for the sake of indexing it later:
+            # example: "[H-01] Finding title"
+            # TODO: Can this be done in a more elegant way?
+            section_headings.append(f"[{finding.id}] {finding.title}")
+
+            # Skip if the severity level is the same as the previous one
+            if finding.severity == current_severity: continue 
+
+            severity_index += 1
+            current_severity = finding.severity
+
+            # Adding the severity level heading to the section headings:
+            section_headings.append(f"{findings_section_index}.{severity_index}. {severity_display} Findings")
+
+            # Get the HTML fragments in the correct order for the current severity:
+            html_fragments = "\n".join(full_by_severity[finding.severity])
+            
+            # TODO: Can this be done in a more elegant way?
+            markdowns.append(
+                f'''
+                    <div id="section-{findings_section_index}-{severity_index}" class="page-break-after">
+                        <{paragraph_subheading_tag} class="paragraph-subheading">
+                            {findings_section_index}.{severity_index}. {severity_display} Findings
+                        </{paragraph_subheading_tag}>
+                        <div>
+                            {html_fragments}
+                        </div>
                     </div>
-                </div>
-            '''
-        )
+                '''
+            )
 
-        # Adding the link to the heading:
-        markdowns[-1] = markdowns[-1].replace(f'[[{finding.severity.value}_severity_index]]', str(severity_index))
- 
-    # Currently 1. is hardcoded to be the about auditor section.
-    section_headings[0] = section_headings[0] + " " + config["author"] # About AUTHOR(S) | Crafted manually
+            # Adding the link to the heading:
+            markdowns[-1] = markdowns[-1].replace(f'[[{finding.severity.value}_severity_index]]', str(severity_index))
+    
+        # Currently 4. is hardcoded to be the about protocol section.
+        section_headings[3] = section_headings[3] + " " + config["protocol_name"]
 
-    # Returning the findings in multiple different formats:
-    return total_amount, amounts_by_severity, "\n".join(markdowns), serialized, section_headings
+        self.total_findings_amount = total_amount
+        self.finding_amounts_by_severity = amounts_by_severity
+        self.findings = "\n".join(markdowns)
+        self.serialized_findings = serialized
+        self.report_section_headings = section_headings

@@ -1,5 +1,5 @@
 from mistune import (
-    create_markdown as mistune_create_markdown, escape, HTMLRenderer
+    create_markdown as mistune_create_markdown, HTMLRenderer
 )
 
 from pygments import highlight
@@ -48,9 +48,9 @@ class HighlightRenderer(HTMLRenderer):
         # TODO: Abstract away the CSS classes into a modular system.
         return f'<div class="code-border no-underline-heading">{highlighted_code}</div>'
     
-def create_markdown(fragment: str, remove_newlines: bool = False) -> str:
+def create_html_from_markdown(fragment: str, remove_newlines: bool = False) -> str:
     """
-        Creates a Markdown parser with syntax highlighting.
+        Creates a Markdown fragment with syntax-highlighted code blocks.
     """
 
     markdown: str = mistune_create_markdown(renderer=HighlightRenderer())(fragment)

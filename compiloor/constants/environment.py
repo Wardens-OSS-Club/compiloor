@@ -3,6 +3,7 @@ from os.path import abspath
 
 FINDING_TEMPLATE_NAME: str = "finding-template.md"
 CONFIG_NAME: str = "config.json"
+COMPILOOR_CACHE_DIRECTORY: str = "compiloor"
 
 INITIALIZED: bool = True
 NOT_INITIALIZED: bool = False
@@ -30,11 +31,11 @@ BASE_CONFIG_SCHEMA: dict[str, str] = {
     "commit": "-",
     "sloc": "-",
     # Sections of the report. They go trough an md renderer.
-    "about_author_content": "ABOUT SECTION",
-    "disclaimer_content": "DISCLAIMER CONTENT",
-    "introduction_content": "INTRODUCTION CONTENT",
-    "about_protocol_content": "ABOUT PROTOCOL CONTENT",
-    "security_assessment_summary_content": "SECURITY ASSESSMENT SUMMARY CONTENT",
+    # "about_author_content": "ABOUT SECTION",
+    # "disclaimer_content": "DISCLAIMER CONTENT",
+    # "introduction_content": "INTRODUCTION CONTENT",
+    # "about_protocol_content": "ABOUT PROTOCOL CONTENT",
+    # "security_assessment_summary_content": "SECURITY ASSESSMENT SUMMARY CONTENT",
     # Should be valid URLs.
     "template_url": "REPORT URL",
     "stylesheet_url": "REPORT CONTENT",
